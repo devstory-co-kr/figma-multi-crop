@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg);
+}
+
+main {
+  padding: 16px 16px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* A Figma-like number field: the side letter sits inside the box and is the drag handle. */
+.field {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+}
+
+.field:focus-within {
+  border-color: var(--figma-color-border-selected);
+}
+
+.field:has(input:invalid) {
+  border-color: var(--figma-color-border-danger);
+}
+
+.scrub {
+  flex: none;
+  width: 28px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--figma-color-text-secondary);
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.field:has(input:disabled) .scrub {
+  color: var(--figma-color-text-disabled);
+  cursor: default;
+}
+
+body.scrubbing,
+body.scrubbing * {
+  cursor: ew-resize !important;
+}
+
+input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px 0 0;
+  font: inherit;
+  color: var(--figma-color-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input:disabled {
+  color: var(--figma-color-text-disabled);
+}
+
+#status {
+  margin: 12px 0 0;
+  white-space: pre-line;
+  color: var(--figma-color-text-secondary);
+}
+
+footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 16px;
+}
+
+button {
+  flex: 1;
+  height: 32px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--figma-color-text-onbrand);
+  background: var(--figma-color-bg-brand);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button.secondary {
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg);
+  border: 1px solid var(--figma-color-border);
+}
+
+button:disabled {
+  background: var(--figma-color-bg-disabled);
+  color: var(--figma-color-text-disabled);
+  cursor: default;
+}
