@@ -111,6 +111,46 @@ function cropNode(node: SceneNode, insets: Insets): SkipReason | null {
   return null;
 }
 
+/**
+ * Insets (negative, so they extend) that grow the node to show the whole image
+ * at its current scale, keeping the image in place on the canvas.
+ */
+function uncropInsets(node: SceneNode): Insets | SkipReason {
+  const paint = imagePaints(node)[0];
+  if (!paint) return SkipReason.NoImageFill;
+  const { width, height } = node;
+  const transform = currentImageTransform(paint, width, height);
+  if (!transform || transform[0][1] !== 0 || transform[1][0] !== 0) {
+    return SkipReason.UnsupportedScaleMode;
+  }
+  const [[sx, , tx], [, sy, ty]] = transform;
+  const left = (-width * tx) / sx;
+  const top = (-height * ty) / sy;
+  return {
+    top,
+    right: width - left - width / sx,
+    bottom: height - top - height / sy,
+    left,
+  };
+}
+
+/** Removes any crop so the whole image is shown. Separate from the preview. */
+export async function uncrop(selection: readonly SceneNode[]): Promise<CropResult> {
+  await loadImageSizes(selection);
+  let cropped = 0;
+  const skipped = new Map<SkipReason, number>();
+  for (const node of selection) {
+    const insets = uncropInsets(node);
+    const reason = typeof insets === "string" ? insets : cropNode(node, insets);
+    if (reason === null) {
+      cropped++;
+    } else {
+      skipped.set(reason, (skipped.get(reason) ?? 0) + 1);
+    }
+  }
+  return { cropped, skipped: [...skipped] };
+}
+
 const ZERO: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 /**
@@ -161,13 +201,8 @@ export function revertPreview() {
   preview.clear();
 }
 
-/** Keeps the preview. Returns the number of cropped nodes. */
-export function commitPreview(): number {
+/** Keeps the preview. */
+export function commitPreview() {
   generation++;
-  let count = 0;
-  for (const { insets } of preview.values()) {
-    if (SIDES.some((side) => insets[side] !== 0)) count++;
-  }
   preview.clear();
-  return count;
 }

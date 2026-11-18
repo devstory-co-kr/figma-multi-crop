@@ -16,7 +16,7 @@ const SCRUB_STEP_FAST = 10;
 
 const fields = document.getElementById("fields") as HTMLDivElement;
 const resetButton = document.getElementById("resetButton") as HTMLButtonElement;
-const cropButton = document.getElementById("cropButton") as HTMLButtonElement;
+const uncropButton = document.getElementById("uncropButton") as HTMLButtonElement;
 const status = document.getElementById("status") as HTMLParagraphElement;
 
 let imageCount = 0;
@@ -32,14 +32,16 @@ function enableScrub(label: HTMLElement, input: HTMLInputElement) {
     if (input.disabled || down.button !== 0) return;
     down.preventDefault();
     label.setPointerCapture(down.pointerId);
+    // Pointer lock keeps the drag going past the plugin window's edge, like Figma's own fields.
+    // If it is refused, pointer capture still works inside the window.
+    Promise.resolve(label.requestPointerLock()).catch(() => {});
     document.body.classList.add("scrubbing");
-    let lastX = down.clientX;
     let value = Math.max(0, Number(input.value) || 0);
 
     const onMove = (move: PointerEvent) => {
       const step = move.shiftKey ? SCRUB_STEP_FAST : SCRUB_STEP;
-      value = Math.max(0, value + (move.clientX - lastX) * step);
-      lastX = move.clientX;
+      // movementX keeps reporting while the pointer is locked; clientX stops changing.
+      value = Math.max(0, value + move.movementX * step);
       const next = String(Math.round(value));
       if (next === input.value) return;
       input.value = next;
@@ -49,6 +51,7 @@ function enableScrub(label: HTMLElement, input: HTMLInputElement) {
       label.removeEventListener("pointermove", onMove);
       label.removeEventListener("pointerup", onEnd);
       label.removeEventListener("pointercancel", onEnd);
+      if (document.pointerLockElement === label) document.exitPointerLock();
       document.body.classList.remove("scrubbing");
     };
     label.addEventListener("pointermove", onMove);
@@ -100,7 +103,7 @@ function render() {
   const hasCrop = insets !== null && SIDES.some((side) => insets[side] > 0);
   for (const input of inputs.values()) input.disabled = imageCount === 0;
   resetButton.disabled = imageCount === 0 || !hasCrop;
-  cropButton.disabled = imageCount === 0 || !hasCrop;
+  uncropButton.disabled = imageCount === 0;
 
   if (imageCount === 0) {
     status.textContent = "Select layers with image fills.";
@@ -123,10 +126,8 @@ resetButton.addEventListener("click", () => {
   render();
 });
 
-cropButton.addEventListener("click", () => {
-  const insets = readInsets();
-  if (!insets) return;
-  send({ type: MessageType.Crop, insets });
+uncropButton.addEventListener("click", () => {
+  send({ type: MessageType.Uncrop });
   clearInputs();
   render();
 });

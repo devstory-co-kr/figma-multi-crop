@@ -19,7 +19,7 @@ export type Insets = Record<Side, number>;
 export enum SkipReason {
   NoImageFill = "no image fill",
   HasChildren = "has children",
-  UnsupportedScaleMode = "FIT, TILE or rotated FILL image",
+  UnsupportedScaleMode = "FIT, TILE or rotated image",
   CropTooLarge = "crop is larger than the layer",
 }
 
@@ -27,8 +27,8 @@ export type CropResult = { cropped: number; skipped: [SkipReason, number][] };
 
 export enum MessageType {
   Preview = "preview",
-  Crop = "crop",
   Reset = "reset",
+  Uncrop = "uncrop",
   Selection = "selection",
   Result = "result",
   Resize = "resize",
@@ -37,8 +37,8 @@ export enum MessageType {
 /** UI -> plugin */
 export type UiMessage =
   | { type: MessageType.Preview; insets: Insets }
-  | { type: MessageType.Crop; insets: Insets }
   | { type: MessageType.Reset }
+  | { type: MessageType.Uncrop }
   | { type: MessageType.Resize; height: number };
 
 /** Plugin -> UI */
